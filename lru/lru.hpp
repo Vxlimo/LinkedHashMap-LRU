@@ -6,6 +6,7 @@
 #include "exceptions.hpp"
 #include "utility.hpp"
 #include <cassert>
+
 class Hash {
 public:
     unsigned int operator()(Integer lhs) const
@@ -27,8 +28,7 @@ template <class T>
 class double_list {
 public:
     /**
-     * elements
-     * add whatever you want
+     * the nodes of double_list
      */
     struct Node {
         T* val;
@@ -47,10 +47,9 @@ public:
     };
     Node *head, *tail;
 
-    // --------------------------
     /**
-     * the follows are constructors and destructors
-     * you can also add some if needed.
+     * constructors and destructors
+     * here we denote tail as a node points to nothing
      */
     double_list()
     {
@@ -82,18 +81,14 @@ public:
         }
         return *this;
     }
+
+    /**
+     * the iterator of double_list
+     * directly point to the Node of double_list
+     */
     class iterator {
     public:
-        /**
-         * elements
-         * add whatever you want
-         */
         Node* p;
-        // --------------------------
-        /**
-         * the follows are constructors and destructors
-         * you can also add some if needed.
-         */
         iterator(Node* p = nullptr)
             : p(p)
         {
@@ -154,7 +149,7 @@ public:
         }
         /**
          * if the iter didn't point to a value
-         * throw " invalid"
+         * throw
          */
         T& operator*() const
         {
@@ -162,15 +157,15 @@ public:
                 throw invalid_iterator();
             return *(p->val);
         }
-        /**
-         * other operation
-         */
         T* operator->() const noexcept
         {
             if (p == nullptr || p->nxt == nullptr)
                 throw invalid_iterator();
             return p->val;
         }
+        /**
+         * other operation
+         */
         bool operator==(const iterator& rhs) const
         {
             return p == rhs.p;
@@ -180,6 +175,54 @@ public:
             return p != rhs.p;
         }
     };
+
+    /**
+     * return an iterator point at the beginning
+     * const or not
+     */
+    iterator begin()
+    {
+        return iterator(head);
+    }
+    iterator begin() const
+    {
+        return iterator(head);
+    }
+    /**
+     * return an iterator point at the last element
+     * maybe not exist
+     */
+    iterator last()
+    {
+        if (tail->pre == nullptr)
+            throw invalid_iterator();
+        return iterator(tail->pre);
+    }
+    /**
+     * return an iterator point at the ending
+     * const or not
+     */
+    iterator end()
+    {
+        return iterator(tail);
+    }
+    iterator end() const
+    {
+        return iterator(tail);
+    }
+
+    /**
+     * if didn't contain anything, return true,
+     * otherwise false
+     */
+    bool empty() const
+    {
+        return head != tail;
+    }
+    /**
+     * destroy the whole double_list
+     * can't be used after destroy
+     */
     void destroy()
     {
         Node* temp = head;
@@ -191,51 +234,27 @@ public:
         delete tail;
         return;
     }
+    /**
+     * clear the whole double_list
+     * can be used after clear
+     */
     void clear()
     {
         destroy();
         head = tail = new Node(nullptr);
         return;
     }
+
     /**
-     * return an iterator to the beginning
-     */
-    iterator begin()
-    {
-        return iterator(head);
-    }
-    iterator begin() const
-    {
-        return iterator(head);
-    }
-    iterator last()
-    {
-        if (tail->pre == nullptr)
-            throw invalid_iterator();
-        return iterator(tail->pre);
-    }
-    /**
-     * return an iterator to the ending
-     * in fact, it returns the iterator point to nothing,
-     * just after the last element.
-     */
-    iterator end()
-    {
-        return iterator(tail);
-    }
-    iterator end() const
-    {
-        return iterator(tail);
-    }
-    /**
-     * if the iter didn't point to anything, do nothing,
+     * erase the element at iterator pos
+     * if the iter didn't point to anything, do nothing
      * otherwise, delete the element pointed by the iter
      * and return the iterator point at the same "index"
      * e.g.
      * 	if the origin iterator point at the 2nd element
      * 	the returned iterator also point at the
      *  2nd element of the list after the operation
-     *  or nothing if the list after the operation
+     *  or the tail if the list after the operation
      *  don't contain 2nd elememt.
      */
     iterator erase(iterator pos)
@@ -252,9 +271,8 @@ public:
             return pos;
         }
     }
-
     /**
-     * the following are operations of double list
+     * insert an element at the head of the list
      */
     void insert_head(const T& val)
     {
@@ -270,6 +288,9 @@ public:
         }
         return;
     }
+    /**
+     * insert an element at the tail of the list
+     */
     void insert_tail(const T& val)
     {
         Node* cur = new Node(new T(val));
@@ -285,6 +306,9 @@ public:
         }
         return;
     }
+    /**
+     * delete the head of the list
+     */
     void delete_head()
     {
         if (head == tail)
@@ -302,6 +326,9 @@ public:
         }
         return;
     }
+    /**
+     * delete the tail of the list
+     */
     void delete_tail()
     {
         if (head == tail)
@@ -318,14 +345,6 @@ public:
         }
         return;
     }
-    /**
-     * if didn't contain anything, return true,
-     * otherwise false.
-     */
-    bool empty() const
-    {
-        return head != tail;
-    }
 };
 
 template <
@@ -338,17 +357,21 @@ public:
     using value_type = pair<const Key, T>;
     using list = double_list<value_type>;
     /**
-     * elements
-     * add whatever you want
+     * possible size of the hashmap
      */
     static constexpr size_t primes[25] = { 7, 17, 31, 61, 127, 257, 509, 1021, 2053, 4093, 8191, 16381, 32771, 65537, 131071, 262147, 524287, 1048573, 2097143, 4194301, 8388617, 16777213, 33554467, 67108859 };
+    /**
+     * the current capacity of the hashmap (primes[capacity])
+     * the current element number of the hashmap
+     */
     size_t capacity, elements;
+    /**
+     * the hashtable
+     */
     list** table;
-    // --------------------------
 
     /**
-     * the follows are constructors and destructors
-     * you can also add some if needed.
+     *  constructors and destructors
      */
     hashmap()
     {
@@ -383,19 +406,15 @@ public:
         }
         return *this;
     }
+
+    /**
+     * the iterator of hashmap
+     * point to the Node in every list
+     */
     class iterator {
     public:
-        /**
-         * elements
-         * add whatever you want
-         */
         using Node = list::Node;
         Node* p;
-        // --------------------------
-        /**
-         * the follows are constructors and destructors
-         * you can also add some if needed.
-         */
         iterator(Node* p = nullptr)
             : p(p)
         {
@@ -413,7 +432,7 @@ public:
             return p;
         }
         /**
-         * if point to nothing
+         * if the iter didn't point to a value
          * throw
          */
         value_type& operator*() const
@@ -422,15 +441,15 @@ public:
                 throw invalid_iterator();
             return *(p->val);
         }
-        /**
-         * other operation
-         */
         value_type* operator->() const noexcept
         {
             if (p == nullptr)
                 throw invalid_iterator();
             return p->val;
         }
+        /**
+         * other operation
+         */
         bool operator==(const iterator& rhs) const
         {
             return p == rhs.p;
@@ -440,10 +459,27 @@ public:
             return p != rhs.p;
         }
     };
+
+    /**
+     * return an iterator point at nothing
+     */
+    iterator end() const
+    {
+        return iterator(nullptr);
+    }
+
+    /**
+     * if didn't contain anything, return true,
+     * otherwise false
+     */
     bool empty() const
     {
         return elements == 0;
     }
+    /**
+     * destroy the whole hashmap
+     * can't be used after destroy
+     */
     void destroy()
     {
         for (size_t i = 0; i < primes[capacity]; i++) {
@@ -454,6 +490,10 @@ public:
         capacity = elements = 0;
         return;
     }
+    /**
+     * clear the whole hashmap
+     * can be used after clear
+     */
     void clear()
     {
         destroy();
@@ -462,10 +502,12 @@ public:
         return;
     }
     /**
-     * you need to expand the hashmap dynamically
+     * if the capacity is lower than the number of elements, expand it
      */
     void expand()
     {
+        if (capacity == 24)
+            throw index_out_of_bound();
         list** new_table = new list*[primes[capacity + 1]]();
         for (size_t i = 0; i < primes[capacity]; i++) {
             if (table[i] != nullptr) {
@@ -483,16 +525,11 @@ public:
         capacity++;
         return;
     }
+
     /**
-     * the iterator point at nothing
-     */
-    iterator end() const
-    {
-        return iterator(nullptr);
-    }
-    /**
-     * find, return a pointer point to the value
-     * not find, return the end (point to nothing)
+     * find the key
+     * find: return a pointer point to the value
+     * not find: return the end (point to nothing)
      */
     iterator find(const Key& key) const
     {
@@ -506,10 +543,11 @@ public:
         return end();
     }
     /**
-     * already have a value_pair with the same key
-     * -> just update the value, return false
-     * not find a value_pair with the same key
-     * -> insert the value_pair, return true
+     * insert a new key
+     * already have a value_pair with the same key:
+     * just update the value, return false
+     * not find a value_pair with the same key:
+     * insert the value_pair, return true
      */
     sjtu::pair<iterator, bool> insert(const value_type& value_pair)
     {
@@ -529,8 +567,9 @@ public:
         }
     }
     /**
-     * the value_pair exists, remove and return true
-     * otherwise, return false
+     * remove a key
+     * the value_pair exists: remove and return true
+     * otherwise: return false
      */
     bool remove(const Key& key)
     {
@@ -557,21 +596,39 @@ public:
     using map_type = hashmap<Key, list_it, Hash, Equal>;
     using map_it = typename map_type::iterator;
     /**
-     * elements
-     * add whatever you want
+     * hashmap: store the key and the iterator to the list
+     * list: store the value_pair and the order
      */
     map_type map;
     list_type list;
-    // --------------------------
+
+    /**
+     *  constructors and destructors
+     */
+    linked_hashmap() = default;
+    linked_hashmap(const linked_hashmap& other)
+    {
+        map = other.map;
+        list = other.list;
+    }
+    ~linked_hashmap() = default;
+    linked_hashmap& operator=(const linked_hashmap& other)
+    {
+        if (this == &other)
+            return *this;
+        map = other.map;
+        list = other.list;
+        return *this;
+    }
+
+    /**
+     * the iterator and const_iterator of linked_hashmap
+     * point to the Node in the list
+     */
     class const_iterator;
     class iterator {
     public:
-        /**
-         * elements
-         * add whatever you want
-         */
         list_it p;
-        // --------------------------
         iterator(list_it p = list_it(nullptr))
             : p(p)
         {
@@ -621,7 +678,7 @@ public:
         }
         /**
          * if the iter didn't point to a value
-         * throw "star invalid"
+         * throw
          */
         value_type& operator*() const
         {
@@ -635,9 +692,8 @@ public:
                 throw invalid_iterator();
             return (p.p)->val;
         }
-
         /**
-         * operator to check whether two iterators are same (pointing to the same memory).
+         * other operation
          */
         bool operator==(const iterator& rhs) const
         {
@@ -656,15 +712,9 @@ public:
             return p != rhs.p;
         }
     };
-
     class const_iterator {
     public:
-        /**
-         * elements
-         * add whatever you want
-         */
         list_it p;
-        // --------------------------
         const_iterator(list_it p = list_it(nullptr))
             : p(p)
         {
@@ -711,7 +761,6 @@ public:
             --p;
             return *this;
         }
-
         /**
          * if the iter didn't point to a value
          * throw
@@ -728,9 +777,8 @@ public:
                 throw invalid_iterator();
             return (p.p)->val;
         }
-
         /**
-         * operator to check whether two iterators are same (pointing to the same memory).
+         * other operation
          */
         bool operator==(const iterator& rhs) const
         {
@@ -750,24 +798,8 @@ public:
         }
     };
 
-    linked_hashmap() = default;
-    linked_hashmap(const linked_hashmap& other)
-    {
-        map = other.map;
-        list = other.list;
-    }
-    ~linked_hashmap() = default;
-    linked_hashmap& operator=(const linked_hashmap& other)
-    {
-        if (this == &other)
-            return *this;
-        map = other.map;
-        list = other.list;
-        return *this;
-    }
-
     /**
-     * return the value connected with the Key(O(1))
+     * return the value connected with the key
      * if the key not found, throw
      */
     T& at(const Key& key)
@@ -796,8 +828,8 @@ public:
     }
 
     /**
-     * return an iterator point to the first
-     * inserted and existed element
+     * return an iterator point at the beginning
+     * const or not
      */
     iterator begin()
     {
@@ -808,7 +840,8 @@ public:
         return const_iterator(list.begin());
     }
     /**
-     * return an iterator after the last inserted element
+     * return an iterator point at the ending
+     * const or not
      */
     iterator end()
     {
@@ -818,6 +851,7 @@ public:
     {
         return const_iterator(list.end());
     }
+
     /**
      * if didn't contain anything, return true,
      * otherwise false.
@@ -826,32 +860,63 @@ public:
     {
         return map.empty();
     }
+    /**
+     * destroy the whole linked_hashmap
+     * can't be used after destroy
+     */
     void destroy()
     {
         map.destroy();
         list.destroy();
         return;
     }
+    /**
+     * clear the whole linked_hashmap
+     * can be used after clear
+     */
     void clear()
     {
         map.clear();
         list.clear();
         return;
     }
-
+    /**
+     * return the number of value_pairs
+     */
     size_t size() const
     {
         return map.elements;
     }
+
     /**
-     * insert the value_pair
-     * if the key of the value_pair exists in the map
-     * update the value instead of adding a new element，
-     * then the order of the element moved from inner of the
-     * list to the head of the list
-     * and return false
-     * if the key of the value_pair doesn't exist in the map
-     * add a new element and return true
+     * find the iterator points at the value_pair
+     * which consist of key
+     * if not find, return an iterator
+     * point at nothing
+     */
+    iterator find(const Key& key)
+    {
+        map_it it = map.find(key);
+        if (it == map.end())
+            return end();
+        return iterator(list_it(it->second));
+    }
+    /**
+     * return how many value_pairs consist of the key
+     * should only return 0 or 1
+     */
+    size_t count(const Key& key) const
+    {
+        map_it it = map.find(key);
+        return it != map.end();
+    }
+    /**
+     * insert a new key
+     * already have a value_pair with the same key:
+     * just update the value, return false
+     * and move the value_pair to the end of the list
+     * not find a value_pair with the same key:
+     * insert the value_pair, return true
      */
     pair<iterator, bool> insert(const value_type& value)
     {
@@ -871,9 +936,8 @@ public:
         }
     }
     /**
-     * erase the value_pair pointed by the iterator
-     * if the iterator points to nothing
-     * throw
+     * erase the element at iterator pos
+     * if the iter didn't point to anything, throw
      */
     void remove(iterator pos)
     {
@@ -884,28 +948,6 @@ public:
         list.erase(it);
         return;
     }
-    /**
-     * return how many value_pairs consist of key
-     * this should only return 0 or 1
-     */
-    size_t count(const Key& key) const
-    {
-        map_it it = map.find(key);
-        return it != map.end();
-    }
-    /**
-     * find the iterator points at the value_pair
-     * which consist of key
-     * if not find, return the iterator
-     * point at nothing
-     */
-    iterator find(const Key& key)
-    {
-        map_it it = map.find(key);
-        if (it == map.end())
-            return end();
-        return iterator(list_it(it->second));
-    }
 };
 
 class lru {
@@ -913,6 +955,10 @@ class lru {
     using value_type = sjtu::pair<const Integer, Matrix<int>>;
 
 public:
+    /**
+     * the size of the list
+     * pop if the list is full
+     */
     size_t size;
     lmap map;
     lru(int size)
@@ -920,6 +966,7 @@ public:
     {
     }
     ~lru() = default;
+
     /**
      * save the value_pair in the memory
      * delete something in the memory if necessary
@@ -946,11 +993,9 @@ public:
         }
         return nullptr;
     }
+
     /**
-     * just print everything in the memory
-     * to debug or test.
-     * this operation follows the order, but don't
-     * change the order.
+     * print everything in the memory
      */
     void print()
     {
